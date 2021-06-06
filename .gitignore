@@ -1,0 +1,14 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+Routing.R
+data/Vecinos2019.rds
+data/Municipios2019_ETRS89.cpg
+data/Municipios2019_ETRS89.dbf
+data/Municipios2019_ETRS89.prj
+data/Municipios2019_ETRS89.sbn
+data/Municipios2019_ETRS89.sbx
+data/Municipios2019_ETRS89.shp
+data/Municipios2019_ETRS89.shp.xml
+data/Municipios2019_ETRS89.shx
