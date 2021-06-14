@@ -270,6 +270,8 @@ knitr::include_graphics("./img/04_Area_Influencia.png")
 
  1. Si el **municipios tiene oficina** el **área de influencia** es el propio **término municipal**.
 
+--
+
  1. Si el **municipio no tiene oficina** el **área de influencia** viene determinada por un número determinado de **municipios vecinos**, entendidos como otros municipios con contigüidad física, con oficinas.
 
 ---
@@ -381,22 +383,50 @@ knitr::include_graphics("./img/12_Vecinos.jpg")
 
 - Una vez tenemos orígenes &ndash;municipios&ndash; y destinos candidatos &ndash;oficinas&ndash; estamos en disposición de calcular **distancias** y **tiempos de viaje**.
 
-- Para ello necesitamos una **red de carreteras** con los atributos respectivos. Báscicamente las longitudes y velocidades de cada tramo.
+- Para ello necesitamos una **red de carreteras** con los atributos respectivos. Básicamente las longitudes y velocidades de cada tramo.
 
 --
 
-- Existen 2 posibilidades para llevar a cabo este tipo de cálculos
+- Existen 2 posibilidades para llevar a cabo este tipo de cálculos:
+
+--
+
+.pull-left[ 
+.red[**Red en local**]
+
+1. Costosa de cargar y mantener.
+
+1. ¿Atributos?
+
+1. Requiere sistemas medianos.
+
+1. Permite contrafactuales.
+
+1. Resultados replicables.
+
+]
+
+--
+
+.pull-right[ 
+.red[**Red en remoto**]
+
+1. Acceso mediante **API**.
+
+1. No necesitamos realmente la red física.
+
+1. 
+
+]
 
 
-`google_geocode()` y `geocodificar_google()` son **funciones análogas** a las de Cartociudad con (casi) idénticos parámetros de entrada y el mismo formato de la respuesta, de forma que los resultados de pueden acumular con `bind_rows()`.
 
-¡La principal diferencia es que, dado que Google es un servicio de pago, requieren una API _key_!
-
-Entre otras cosas, por esta razón, la geocodificación de las oficinas bancarias primero pasó por Cartociudad y luego por Google.
 
 ---
 
 # Georeferenciación de Oficinas: _workflow_
+
+`google_geocode()`
 
 - Se realiza un primer paso por [Cartociudad](https://www.cartociudad.es/portal/) utilizando el poligono del municipio como control de calidad espacial —si la coordenada no cae dentro del municipio se desecha—
 
