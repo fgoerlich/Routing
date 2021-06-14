@@ -50,7 +50,7 @@ Los problemas de rutas pueden ser extremadamente complejos.
 
 Si queremos ir de _A_ a _B_, ¿como queremos ir?
 
-En coche, a pie, en bicicleta, en tren, en barco --¿es posible?--, en avión.
+En coche, a pie, en bicicleta, en tren, en barco &ndash;¿es posible?&ndash;, en avión.
 
 ¿En un único medio de transporte o combinando varios?
 
@@ -167,6 +167,7 @@ Disponemos del fichero de Oficinas bancarias de diciembre de 2020 del Banco de E
 ¿Cual es la dimensión de nuestro problema?
 
 **Origenes:** 8 131 municipios.
+
 **Destinos:** 22 558 oficinas.
 
 --
@@ -201,13 +202,13 @@ Tenemos, pues, 2 problemas a resolver:
 
 <br>
 
-Acotar el conjunto de oficinas candidatas a las mas cercanas de un municipio puede hacerse mediante lo que en _GIS_ se conoce como determinación de **áreas de influencia**, ¡y naturalmente no hay una forma única de hacerlo!
+Acotar el conjunto de oficinas candidatas a las más cercanas de un municipio puede hacerse mediante lo que en _GIS_ se conoce como determinación de **áreas de influencia**, ¡y naturalmente no hay una forma única de hacerlo!
 
 ---
 
 # ¿Áreas de influencia?
 
-- Si **no disponemos de la red** es posible dividir, de forma **óptima**<sup>*</sup>, el territorio en tantos poligonos como destinos tengamos -oficinas en nuestro caso- y asignar los orígenes a dichos polígonos. Una forma de hacer esto es la [teselación de Voronoi](http://alexbeutel.com/webgl/voronoi.html) ([sf::st_voronoi](https://r-spatial.github.io/sf/reference/geos_unary.html)).
+- Si **no disponemos de la red** es posible dividir, de forma **óptima**<sup>*</sup>, el territorio en tantos poligonos como destinos tengamos &ndash;oficinas en nuestro caso&ndash; y asignar los orígenes a dichos polígonos. Una forma de hacer esto es la [teselación de Voronoi](http://alexbeutel.com/webgl/voronoi.html) ([sf::st_voronoi](https://r-spatial.github.io/sf/reference/geos_unary.html)).
 
 .footnote[(*) Por óptima entendemos que las lineas que determinan los polígonos son equidistantes a los puntos.]
 
@@ -268,11 +269,11 @@ knitr::include_graphics("./img/04_Area_Influencia.png")
 
 - Dos casos:
 
- 1. Si el **municipios tiene oficina** el **área de influencia** es el propio **término municipal**.
+ 1. Si el **municipios tiene oficina**, el **área de influencia** es el propio **término municipal**.
 
 --
 
- 1. Si el **municipio no tiene oficina** el **área de influencia** viene determinada por un número determinado de **municipios vecinos**, entendidos como otros municipios con contigüidad física, con oficinas.
+ 1. Si el **municipio no tiene oficina**, el **área de influencia** viene determinada por un número determinado de **municipios vecinos**, entendidos como otros municipios con contigüidad física, con oficinas.
 
 ---
 
@@ -301,13 +302,13 @@ knitr::include_graphics("./img/05_ValOfi.jpg")
 
 - En el caso de los **municipios sin oficina** el umbral de municipios vecinos en los que buscar la oficina más cercana se fijó en 20.
 
-- El **supuesto implícito** es que la oficina más cercana al municipio en cuestión que carece de oficina está en los 20 vecinos más próximos que tienen oficina.
+- El **supuesto implícito** es que la oficina más cercana está en los 20 vecinos más próximos que tienen oficina.
 
 --
 
 - La búsqueda de vecinos se hace por contiguidad física del término municipal, iterativamente a partir de la contigüidad de primer orden, hasta completar al menos 20 vecinos con oficinas.
 
-- El algoritmo de búsqueda implica que tendremos, al menos, 20 municipios vecinos &ndash;de un orden de contigüidad no identificado a priori&ndash; con oficina, y al menos 20 candidatos &ndash;oficinas&ndash;, pero normalmente muchas más.
+- El algoritmo de búsqueda implica que tendremos, como mínimo, 20 municipios vecinos &ndash;de un orden de contigüidad no identificado a priori&ndash; con oficina, y al menos 20 candidatos &ndash;oficinas&ndash;, pero normalmente muchos más.
 
 ---
 
