@@ -526,8 +526,19 @@ knitr::include_graphics("./img/14_TomTom.jpg")
 
 # [Cartociudad](https://www.cartociudad.es/portal/) _versus_ [Google](https://cloud.google.com/maps-platform): Distancias
 
+```{r, echo = FALSE, eval = TRUE, out.width = "80%", fig.align = "center"}
+knitr::include_graphics("./img/15_CGDistancia.jpg")
+```
 
---
+---
+
+# [Cartociudad](https://www.cartociudad.es/portal/) _versus_ [Google](https://cloud.google.com/maps-platform): Tiempos
+
+```{r, echo = FALSE, eval = TRUE, out.width = "80%", fig.align = "center"}
+knitr::include_graphics("./img/16_CGTiempo.jpg")
+```
+
+---
 
 ```{r, eval = FALSE}
 # 02Oficinas_Carto2.R
