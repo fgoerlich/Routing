@@ -382,15 +382,21 @@ knitr::include_graphics("./img/12_Vecinos.jpg")
 
 # Distancias y tiempos.
 
-- Una vez tenemos orígenes &ndash;municipios&ndash; y destinos candidatos &ndash;oficinas&ndash; estamos en disposición de calcular **distancias** y **tiempos de viaje**.
+- Una vez tenemos **orígenes** &ndash;municipios&ndash; y **destinos** candidatos &ndash;oficinas&ndash; estamos en disposición de calcular **distancias** y **tiempos de viaje**.
 
-- Para ello necesitamos una **red de carreteras** con los atributos respectivos. Básicamente las longitudes y velocidades de cada tramo.
+- Para ello necesitamos una **red de carreteras** con los atributos correspondientes. Básicamente la longitud y velocidad de cada tramo.
 
---
+- La longitud se puede medir sobre la propia red.
+
+- El tiempo de viaje necesita supuestos sobre velocidades &ndash;reales o teóricas&ndash; del medio de transporte.
+
+- La **ruta óptima** entre 2 puntos es un problema estándar en GIS, se resuelve mediante alguna variante del [algoritmo de Dijkstra](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) y está implementado en cualquier _software_ o libraría de GIS que tenga funcionalidades de redes ([sfnetwroks](https://luukvdmeer.github.io/sfnetworks/index.html)). ¡Esto **no** es un problema!
+
+---
+
+# Distancias y tiempos.
 
 - Existen 2 posibilidades para llevar a cabo este tipo de cálculos:
-
---
 
 .pull-left[ 
 .red[**Red en local**]
@@ -399,12 +405,13 @@ knitr::include_graphics("./img/12_Vecinos.jpg")
 
 1. ¿Atributos?
 
-1. Requiere sistemas medianos.
+1. Requiere sistemas de cálculo medianos.
 
 1. Permite contrafactuales.
 
 1. Resultados replicables.
 
+1. ¡Controlamos la red!
 ]
 
 --
@@ -416,48 +423,109 @@ knitr::include_graphics("./img/12_Vecinos.jpg")
 
 1. No necesitamos realmente la red física.
 
-1. 
+1. No requiere grandes sistemas.
 
+1. No permite contrafactuales.
+
+1. ¿Replicabilidad?
+
+1. ¡No controlamos la red!
 ]
 
-
-
-
 ---
 
-# Georeferenciación de Oficinas: _workflow_
+# Red Local: IGN - Redes de Transporte
 
-`google_geocode()`
+.pull-left[ 
 
-- Se realiza un primer paso por [Cartociudad](https://www.cartociudad.es/portal/) utilizando el poligono del municipio como control de calidad espacial —si la coordenada no cae dentro del municipio se desecha—
-
-```{r, eval = FALSE}
-# 01Oficinas_Carto1.R
-for(i in 1:n){
-  poly <- Municipios2020 %>% filter(INECodMuni == Oficinas$CodMuni[i])
-  g <- geocodificar_cartociudad(Oficinas$ndir[i], poligono = poly)       #<<
-  Oficinas$georef[i]  <- g$georef
-  Oficinas$comment[i] <- g$comment
-  if (g$georef == 'SI'){
-    Oficinas$Longitud[i] <- g$lng
-    Oficinas$Latitud[i]  <- g$lat
-    Oficinas$Fuente[i]   <- if_else(g$version == 'prev', 'Cartociudad. Version antigua.', 'Cartociudad. Version nueva.')
-    Oficinas$Comentarios[i] <- paste0(g$stateMsg, ' (', g$state, '). Lugar: ', g$muni, ' (', g$province, ').')
-    Oficinas$CalidadGeocodificacion[i] <- 'Coordenada en TM.'
-    Oficinas$DireccionNormalizada[i] <- normaliza_dir(g$tip_via, g$address, g$portalNumber, g$muni, g$province, g$postalCode)
-  }
-}
+```{r, echo = FALSE, eval = TRUE, out.width = "80%", fig.align = "center"}
+knitr::include_graphics("./img/13_Redes_Transporte.jpg")
 ```
+]
+
+.pull-right[ 
+
+1. Información Geográfica de Referencia.
+
+1. Fuente oficial (IGN).
+
+1. Multimodal (¡pero podemos coger lo que necesitemos!).
+
+1. Carece de atributos.
+
+1. ¡Controlamos la red!
+
+1. Costosa de implementar y mantener.
+
+1. ¡Gratuita!
+]
 
 ---
 
-# Georeferenciación de Oficinas: _workflow_
+# Red Local: TomTom - [_Speed Profile_](https://www.tomtom.com/products/speed-profiles/)
 
-- Esta primera pasada georeferenció el 89.4% de las oficinas, 20 163, con lo que nos faltan por georeferenciar el 10.6% de las oficinas, 2 395.
+.pull-left[ 
 
-- Si en la primera pasada no llegáis al 80% de tasa de éxito, o las direcciones no están bien tratadas o no tienen la suficiente calidad para acometer el proceso. ¡Volvemos a la casilla de salida!
+```{r, echo = FALSE, eval = TRUE, out.width = "100%", fig.align = "center"}
+knitr::include_graphics("./img/14_TomTom.jpg")
+```
+]
 
-- ¡Agita las direcciones y vuelvelas a pasar por Cartociudad!
+.pull-right[ 
+
+1. Elevada calidad y resolución.
+
+1. Rica en atributos.
+
+1. ¡Datos de tráfico reales! y por cortes diarios y temporales.
+
+1. Unimodal.
+
+1. ¡Controlamos la red!
+
+1. Sencilla de implementar y mantener.
+
+1. Elevado coste.
+]
+
+---
+
+# Red remota: ¿Alternativas?
+
+- Enviamos los orígenes y destinos a un servicio de _routing_. El mundo de los servicios tiene _pros_ y _cons_, pero resulta más sencillo que el mantenimiento de una red en local.
+
+- Opción elegida para la monografía de accesibilidad.
+
+### [Cartociudad](https://www.cartociudad.es/portal/) _versus_ [Google](https://cloud.google.com/maps-platform)
+
+.pull-left[
+**Cartociudad**
+
+1. Cobertura nacional.
+
+1. Servicio gratuito e ¡**ilimitado**!
+
+1. Documentación de la [API](http://www.cartociudad.es/recursos/Documentacion_tecnica/CARTOCIUDAD_ServiciosWeb.pdf).
+
+1. No es fiable en tiempos de viaje en coche.
+]
+
+.pull-right[
+**Google**
+
+1. Cobertura mundial.
+
+1. Servicio de pago y ¡**limitado**!
+
+1. Documentación de la [API](https://developers.google.com/maps/documentation/distance-matrix/overview).
+
+1. Fiable en distancias y tiempos.
+]
+
+---
+
+# [Cartociudad](https://www.cartociudad.es/portal/) _versus_ [Google](https://cloud.google.com/maps-platform): Distancias
+
 
 --
 
