@@ -526,92 +526,107 @@ knitr::include_graphics("./img/14_TomTom.jpg")
 
 # [Cartociudad](https://www.cartociudad.es/portal/) _versus_ [Google](https://cloud.google.com/maps-platform): Distancias
 
-```{r, echo = FALSE, eval = TRUE, out.width = "80%", fig.align = "center"}
+```{r, echo = FALSE, eval = TRUE, out.width = "75%", fig.align = "center"}
 knitr::include_graphics("./img/15_CGDistancia.jpg")
 ```
+
+???
+
+Las distancias entre ambos servicios son ok. Correlación 0.96.
 
 ---
 
 # [Cartociudad](https://www.cartociudad.es/portal/) _versus_ [Google](https://cloud.google.com/maps-platform): Tiempos
 
-```{r, echo = FALSE, eval = TRUE, out.width = "80%", fig.align = "center"}
+```{r, echo = FALSE, eval = TRUE, out.width = "75%", fig.align = "center"}
 knitr::include_graphics("./img/16_CGTiempo.jpg")
 ```
 
----
+???
 
-```{r, eval = FALSE}
-# 02Oficinas_Carto2.R
-Oficinas <- Oficinas %>%
-  mutate(vdir = agita_dir(tvia, nvia, npoli, Municipio, Provincia, CP, nivel = niv)) #<<
-```
-
-- **Agitando** las direcciones conseguimos georeferenciar 583 oficinas más. ¡Ya tenemos el 92.0%!, nos quedan 1 812 oficinas por georeferenciar, el 8.0%.
+Los tiempos de Cartociudad son en algunos casos superiores a los de Google. Correlación 0.81.
 
 ---
 
-# Georeferenciación de Oficinas: _workflow_
+# Monografía accesibilidad
 
-- ¿Tiene Google algo que decir? Sí. Normalmente bastante. Las restantes las pasamos por Google, que encuentra 1 702 oficinas. ¡Nos quedan 110!
+- Dada la mayor fialibilidad de Google, pero al mismo tiempo su elevado coste para un gran número de consultas se implementó una estrategia en dos etapas<sup>*</sup>:
 
+1. Todos los candidatos determinados en el **área de influencia** se enviaron a Cartociudad: ¡Unas 600 000 rutas y un par de días de cálculo!
 
-```{r, eval = FALSE}
-# 03Oficinas_Google1.R
-for(j in 1:totno.geo){
-  i <- no.geo[j]
-  poly <- Municipios2020 %>% filter(INECodMuni == Oficinas$CodMuni[i])
-  g <- geocodificar_google(Oficinas$ndir[i], clave_google = APIkey, poligono = poly) #<<
-  Oficinas$georef[i]  <- g$georef
-  Oficinas$comment[i] <- g$comment
-  if (g$georef == 'SI'){
-    Oficinas$Longitud[i] <- g$lng
-    Oficinas$Latitud[i]  <- g$lat
-    Oficinas$Fuente[i] <- 'Google'
-    Oficinas$Comentarios[i] <- paste0(g$stateMsg, ' (', g$state, '). Lugar: ', g$muni, ' (', g$province, ').')
-    Oficinas$CalidadGeocodificacion[i] <- 'Coordenada en TM.'
-    Oficinas$DireccionNormalizada[i] <- normaliza_dir(g$tip_via, g$address, g$portalNumber, g$muni, g$province, g$postalCode)
-  }
-}
-```
+2. A partir de las rutas para todos los candidatos se hizo una **selección por distancia** que se envió a Google: Las **4 oficinas** más cercanas de **4 municipios diferentes**.
+
+<br>
+
+Se enviaron a Google, además, todas las rutas que Cartociudad no encuentra, ¡porque Cartociudad no lo encuentra todo!
+
+.footnote[(*) Para los municipios con oficina se enviaron a Google todas las oficinas del municipio.]
 
 ---
 
-# Georeferenciación de Oficinas: _workflow_
-
-- Google tiene la ventaja de que admite POIs (_Points of Interest_), Cartociudad no.
-
-- Probamos a añadir la `Entidad` entidad a la dirección.
+# _Routing_ Cartociudad: Funciones
 
 ```{r, eval = FALSE}
-# 04Oficinas_Google2.R
-# Añadimos la Entidad al principio de la direccion
-direccion <- paste0(Oficinas$Entidad[i], ', ', Oficinas$ndir[i])  #<<
-g <- geocodificar_google(direccion, clave_google = APIkey, poligono = poly)
+# Distancia y Tiempo de Viaje entre 2 puntos (coordenadas)
+cartociudad_get_distance <- function (from, to, vehicle = c("car", "walk"))
+
+#  Distancia y Tiempo de Viaje entre 2 vectores de coordenadas
+cartociudad_distance <- function(from, to, vehicle = c("car", "walk"), progress = TRUE)
 ```
 
-- Lo que encuentra 77 coordenadas adicionales.
+- `cartociudad_get_distance()`: ruta única entre 2 puntos (coordenadas) en ETRS89.
 
-- ¡Nos quedan 33 oficinas por geocodificar, el 0.15%!
+- `cartociudad_distance()`: rutas masivas _pairwise_ entre 2 vectores de puntos (coordenadas), o entre un origen y múltiples destinos o entre múltiples orígenes y un destino en ETRS89.
 
-- Si podéis prescindir de 33 observaciones de 22 558 os haréis un favor, en caso contrario solo queda hacer una investigación individual, rebajar las exigencias, y/o acudir a la base de datos de coordenadas de respaldo. En este caso las coordenadas de la Capital del Municipio.
+Calcula rutas en coche o a pie.
+
+En ambos casos devuelve un `tibble` con la distancia (en metros), el tiempo de viaje (en segundos) y una variable de _status_: `OK` o `NOT_FOUND`.
 
 ---
 
-# Oficinas díscolas (1/3)
-
-Llegados a este punto podemos dudar, de forma razonable, de todas las fuentes de información: El geocodificador puede no encontrar la dirección, las coordenadas devueltas pueden ser incorrectas, el fichero original puede tener errores -de hecho los tiene, ¡y muchos!—, y/o el fichero de lindes puede ser impreciso.
-
-En este caso concreto se procedió de la siguiente forma:
-
-- Después de pasar por Cartociudad y Google se examinaron individualmente las oficinas que no se consiguió georeferenciar.
-
-- En particular, se vió donde devolvía el geocodificador coordenadas: _Spatial join_
+# _Routing_ Google: Funciones
 
 ```{r, eval = FALSE}
-# 05Oficinas_Spatial_join.R
-g_join <- st_as_sf(OficinasNO, coords = c('Longitud', 'Latitud'), crs = 4258) %>%
-  st_join(Municipios2020)   #<<
+# Distancia y Tiempo de Viaje entre 2 puntos (coordenadas)
+google_get_distance <- function (from, to, mode = c("driving", "walking", "bicycling", "transit"), key = NULL)
+
+#  Distancia y Tiempo de Viaje entre 2 vectores de coordenadas
+google_distance <- function(from, to, mode = c("driving", "walking", "bicycling", "transit"), key = NULL, progress = TRUE)
 ```
+
+- `google_get_distance()`: ruta única entre 2 puntos (coordenadas) en WGS84.
+
+- `google_distance()`: rutas masivas _pairwise_ entre 2 vectores de puntos (coordenadas), o entre un origen y múltiples destinos o entre múltiples orígenes y un destino en WGS84.
+
+Calcula rutas en coche, a pie, en bicicleta o multimodales.
+
+Los resultados dependen (marginalmente) del momento de la consulta, porque Google dispone información de tráfico por franjas horarias y días.
+
+En ambos casos devuelve un `tibble` con la distancia (en metros), el tiempo de viaje (en segundos) y una variable de _status_: `OK` o `NOT_FOUND`.
+
+---
+
+# ¿Hay alternativas a [Cartociudad](https://www.cartociudad.es/portal/) o [Google](https://cloud.google.com/maps-platform)?
+
+##<center>.green[**Sí.**]<center/>
+
+###<center>[Google](https://cloud.google.com/maps-platform) tiene versión _OpenSource_ : [Open Street Maps](https://www.openstreetmap.org/#map=6/40.007/-2.488), (OSM).<center/>
+
+- La información de [OSM](https://www.openstreetmap.org/#map=6/40.007/-2.488) es accesible mediante [**API**](https://wiki.openstreetmap.org/wiki/Main_Page) o descarga directa.
+
+- La información se actualiza diariamente: [Geofabric](https://www.geofabrik.de/).
+
+- Dispone de un servicio de geocodificación: [Nominatim](https://nominatim.org/).
+
+- Dispone de un servicio de _routing_: [OSRM](http://project-osrm.org/).
+
+- ¡Es posible instalar [OSM](https://www.openstreetmap.org/#map=6/40.007/-2.488) en local! ¡En el [Ivie](https://www.ivie.es/es_ES/) hay un servidor de [OSM](https://www.openstreetmap.org/#map=6/40.007/-2.488)!
+
+- ¡Es (monetariamente) gratis!
+
+- Hay librerías de [_R_](https://cran.r-project.org/) que acceden a todo: datos, geocodificación, _routing_,... en remoto o en local.
+
+
 
 ---
 
