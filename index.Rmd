@@ -570,7 +570,7 @@ Se enviaron a Google, además, todas las rutas que Cartociudad no encuentra, ¡p
 # Distancia y Tiempo de Viaje entre 2 puntos (coordenadas)
 cartociudad_get_distance <- function (from, to, vehicle = c("car", "walk"))
 
-#  Distancia y Tiempo de Viaje entre 2 vectores de coordenadas
+# Distancia y Tiempo de Viaje entre 2 vectores de coordenadas
 cartociudad_distance <- function(from, to, vehicle = c("car", "walk"), progress = TRUE)
 ```
 
@@ -590,7 +590,7 @@ En ambos casos devuelve un `tibble` con la distancia (en metros), el tiempo de v
 # Distancia y Tiempo de Viaje entre 2 puntos (coordenadas)
 google_get_distance <- function (from, to, mode = c("driving", "walking", "bicycling", "transit"), key = NULL)
 
-#  Distancia y Tiempo de Viaje entre 2 vectores de coordenadas
+# Distancia y Tiempo de Viaje entre 2 vectores de coordenadas
 google_distance <- function(from, to, mode = c("driving", "walking", "bicycling", "transit"), key = NULL, progress = TRUE)
 ```
 
@@ -626,102 +626,70 @@ En ambos casos devuelve un `tibble` con la distancia (en metros), el tiempo de v
 
 - Hay librerías de [_R_](https://cran.r-project.org/) que acceden a todo: datos, geocodificación, _routing_,... en remoto o en local.
 
-
-
 ---
 
-# Oficinas díscolas (2/3)
-
-- Se hicieron búsquedas manuales en Google y en los buscadores de las oficinas de cada entidad.
-
-- Ello permitió corregir numerosos errores del fichero original del Banco de España<sup>*</sup>.
-
-- Rebajando la precisión de la coordenada devuelta por Cartociudad, `state = 6`, se geocodificó 1 oficina más.
+# _Routing_ OSM: Funciones
 
 ```{r, eval = FALSE}
-# 06Oficinas_Carto4.R
-g <- cartociudad_geocode(Oficinas$ndir[i], ver = "current", progress = FALSE)
-  if (g$state == 6) # Aceptamos la coordenada con menor precisión #<<
+# Distancia y Tiempo de Viaje entre 2 puntos (coordenadas)
+osm_get_distance <- function (from, to, profile = c("car", "bike", "foot"), server = NULL)
+
+# Distancia y Tiempo de Viaje entre 2 vectores de coordenadas
+oms_distance <- function(from, to, profile = c("car", "bike", "foot"), server = NULL)
 ```
 
-- Se mantuvo el criterio de que todas las coordenadas debían "caer" en el término municipal de acuerdo con el mapa del IGN. ¡Aún a sabiendas de que el mapa no es perfecto y contiene errores!
+- `osm_get_distance()`: ruta única entre 2 puntos (coordenadas) en WGS84.
 
+- `oms_distance()`: rutas masivas _pairwise_ entre 2 vectores de puntos (coordenadas), o entre un origen y múltiples destinos o entre múltiples orígenes y un destino en WGS84.
 
-.footnote[(*) Esto se hizo en iteraciones anteriores del proceso.]
+Calcula rutas en coche, a pie o en bicicleta.
 
----
+La opción `server` permite acceder a un servidor local.
 
-# Oficinas díscolas (3/3)
-
-- Finalmente, para 32 oficinas, se asignó la **coordenada de la Capital del Municipio**<sup>*</sup>.
-
-Lo que cierra el proceso (iterativo) de georeferenciación.
-
-<br/>
-
-----
-
-.footnote[(*) Esta información procede del Nomenclátor geografico del IGN y se comprobó que las coordenadas caen donde deben hacerlo.]
-
---
-
-<br/>
-
-- La distribución final del origen de las coordenadas es
-
-
-
----
-
-# Comprobaciones finales
-
-Es **importante** realizar **dos comprobaciones finales**:
-
-- Comprobar que **todas las coordenadas caen dentro de la precisión espacial fijada** en la estrategia inicial<sup>*</sup>.
-
-```{r, eval = FALSE}
-# 07Oficinas_final.R
-OfiMuni <- Oficinas %>%
-  st_as_sf(coords = c("Longitud", "Latitud"), crs = 4258) %>%
-  st_intersection(Municipios2020)  # Una interseción espacial hace el trabajo #<<
-sum(OfiMuni$CodMuni != OfiMuni$INECodMuni)
-```
-
-.footnote[(*) Si hay excepciones se deberá dejar registro de ello.]
-
---
-
-- Comprobar **duplicados por coordenada**. Muy útil para detectar errores. 
-
-```{r, eval = FALSE}
-# 07Oficinas_final.R
-duplicados <- Oficinas %>%
-  janitor::get_dupes(CodMuni, Municipio, CodEnt, Entidad, Longitud, Latitud) #<<
-```
+En ambos casos devuelve un `tibble` con la distancia (en metros), el tiempo de viaje (en segundos) y una variable de _status_: `OK`, `NULL_VALUES` o `NOT_FOUND`.
 
 ---
 
 class: inverse, center, middle
 
-# ¿Para que sirve todo esto?
+# ¿Y si queremos pintar las rutas?
 
 ---
 
-### Para pintar oficinas en el mapa...
+### Para ilustrar las rutas...
 
-```{r echo = FALSE, out.width = "100%", fig.height = 6, eval = require("leaflet")}
-leaflet(Oficinas) %>% addTiles() %>% setView(lng = -0.3559, lat = 39.4805, zoom = 18) %>%
-  addMarkers(lng = -0.3559, lat = 39.4805, icon = IvieIcon) %>%
-  addMarkers(clusterOptions = markerClusterOptions(), popup = ~ Entidad)
+...disponemos de las mismas funciones, pero en lugar de devolver un `tibble` con los resultados de distancia/tiempo devuelve una _simple feature_ con esos atributos y la geometría de la ruta para operar con ella o pintarla a efectos ilustrativos.
+
+```{r, eval = FALSE}
+# Cartociudad: Ruta entre 2 puntos (coordenadas)
+cartociudad_get_route <- function(from, to, vehicle = c("car", "walk"), plot = FALSE)
+# Cartociudad: Rutas entre 2 vectores de coordenadas
+cartociudad_routing <- function(from, to, vehicle = c("car", "walk"), progress = TRUE, ...)
+
+# Google: Ruta entre 2 puntos (coordenadas)
+google_get_route <- function(from, to, mode = c("driving", "walking", "bicycling", "transit"), key = NULL, plot = FALSE)
+# Google: Rutas entre 2 vectores de coordenadas
+google_routing <- function(from, to, mode = c("driving", "walking", "bicycling", "transit"), key = NULL, progress = TRUE, ...)
+
+# OSM: Ruta entre 2 puntos (coordenadas)
+osm_get_route <- function(from, to, profile = c("car", "bike", "foot"), overview = c("full", "simplified"), server = NULL, plot = FALSE)
+# OSM: Rutas entre 2 vectores de coordenadas
+osm_routing <- function(from, to, profile = c("car", "bike", "foot"), progress = TRUE, overview = c("full", "simplified"), server = NULL, ...)
 ```
 
 ---
+### Ejemplos...
+
+```{r, echo = FALSE, eval = TRUE, out.width = "50%", fig.align = "default", fig.show = "hold"}
+knitr::include_graphics(c("./img/17_route.png", "./img/18_route.png"))
+```
+---
+
 background-image: url(https://www.ivie.es/wp-content/uploads/2017/02/logo.jpg), url(https://www.uv.es/recursos/fatwirepub/css/logoPeu.png)
 background-position: 95% 5%, 5% 95%
 background-size: 12%, 20%
 
 class: center, middle
-
 
 # ¡Gracias por la atención!
 
