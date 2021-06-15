@@ -624,7 +624,7 @@ En ambos casos devuelve un `tibble` con la distancia (en metros), el tiempo de v
 
 - ¡Es (monetariamente) gratis!
 
-- Hay librerías de [_R_](https://cran.r-project.org/) que acceden a todo: datos, geocodificación, _routing_,... en remoto o en local.
+- Hay librerías de [_R_](https://cran.r-project.org/) que acceden a todo: [datos](https://docs.ropensci.org/osmdata/), [geocodificación](https://github.com/hrbrmstr/nominatim), [_routing_](https://github.com/riatelab/osrm),... en remoto o en local.
 
 ---
 
