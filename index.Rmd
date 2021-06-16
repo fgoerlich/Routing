@@ -3,7 +3,7 @@ title: "Distancias y Tiempos"
 subtitle: "🌎 <br/><br/>con _R_"
 author: "Francisco Goerlich"
 institute: "Universidad de Valencia e Ivie"
-date: "??/06/2021"
+date: "23/06/2021"
 output:
   xaringan::moon_reader:
     lib_dir: libs
