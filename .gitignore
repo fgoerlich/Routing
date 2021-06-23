@@ -3,6 +3,7 @@
 .RData
 .Ruserdata
 Routing.R
+index.html
 data/Vecinos2019.rds
 data/Municipios2019_ETRS89.cpg
 data/Municipios2019_ETRS89.dbf
